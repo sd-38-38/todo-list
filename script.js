@@ -1,6 +1,7 @@
 const form = document.getElementById("add-form");
 const input = document.getElementById("todo-input");
 const list = document.getElementById("todo-list");
+const clearAllBtn = document.getElementById("clear-all");
 
 const editIcon = `
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -65,4 +66,8 @@ form.addEventListener("submit", (event) => {
 
   input.value = "";
   input.focus();
+});
+
+clearAllBtn.addEventListener("click", () => {
+  list.innerHTML = "";
 });

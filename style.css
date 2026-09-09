@@ -117,6 +117,31 @@ h1 {
   background: #5c9570;
 }
 
+.list-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.clear-all-btn {
+  padding: 0.55rem 1.1rem;
+  border: 3px solid #c62828;
+  border-radius: 10px;
+  background: #ffebee;
+  color: #b71c1c;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clear-all-btn:hover {
+  background: #ef5350;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(198, 40, 40, 0.4);
+}
+
 .todo-list {
   list-style: none;
   display: flex;
