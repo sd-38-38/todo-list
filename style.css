@@ -125,6 +125,9 @@ h1 {
 }
 
 .todo-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.85rem 1.1rem;
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid #c8dfc9;
@@ -132,4 +135,62 @@ h1 {
   border-left: 4px solid #8fbc8f;
   color: #355544;
   font-size: 0.98rem;
+}
+
+.todo-check {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #6ea87a;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todo-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.todo-text.completed {
+  text-decoration: line-through;
+  color: #7a9585;
+  opacity: 0.8;
+}
+
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 8px;
+  background: #e4f0e6;
+  color: #4f7a5c;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.edit-btn:hover {
+  background: #cfe3d4;
+  color: #3d5c4a;
+}
+
+.delete-btn {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: #e57373;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #ef5350;
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(229, 115, 115, 0.55);
 }
