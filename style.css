@@ -1,0 +1,135 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: "Segoe UI", Georgia, serif;
+  color: #2f4a3a;
+  background:
+    radial-gradient(ellipse at 20% 10%, #e8f5e9 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, #dcedc8 0%, transparent 45%),
+    linear-gradient(160deg, #f1f8f4 0%, #e3efe6 50%, #d8ead9 100%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3rem 1.25rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.leaf {
+  position: fixed;
+  width: 120px;
+  height: 70px;
+  background: #a8d5a2;
+  border-radius: 0 70% 0 70%;
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.leaf-1 {
+  top: 8%;
+  left: 6%;
+  transform: rotate(-25deg);
+  background: #9ccc95;
+}
+
+.leaf-2 {
+  top: 55%;
+  right: 8%;
+  width: 90px;
+  height: 55px;
+  transform: rotate(40deg);
+  background: #81c784;
+  opacity: 0.18;
+}
+
+.leaf-3 {
+  bottom: 12%;
+  left: 18%;
+  width: 70px;
+  height: 42px;
+  transform: rotate(-55deg);
+  background: #c5e1a5;
+  opacity: 0.25;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #3d5c4a;
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.add-form {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+}
+
+.add-form input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #b7d4be;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #2f4a3a;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.add-form input::placeholder {
+  color: #8aab94;
+}
+
+.add-form input:focus {
+  border-color: #7cb083;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.add-form button {
+  padding: 0.75rem 1.35rem;
+  border: none;
+  border-radius: 10px;
+  background: #6ea87a;
+  color: #f7fbf8;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.add-form button:hover {
+  background: #5c9570;
+}
+
+.todo-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.todo-list li {
+  padding: 0.85rem 1.1rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid #c8dfc9;
+  border-radius: 10px;
+  border-left: 4px solid #8fbc8f;
+  color: #355544;
+  font-size: 0.98rem;
+}
