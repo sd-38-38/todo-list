@@ -2,6 +2,7 @@ const form = document.getElementById("add-form");
 const input = document.getElementById("todo-input");
 const list = document.getElementById("todo-list");
 const clearAllBtn = document.getElementById("clear-all");
+const STORAGE_KEY = "todo-list";
 
 const editIcon = `
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -10,16 +11,48 @@ const editIcon = `
   </svg>
 `;
 
-function createTodoItem(text) {
+function saveTodos() {
+  const todos = [...list.querySelectorAll("li")].map((item) => {
+    const checkbox = item.querySelector(".todo-check");
+    const textSpan = item.querySelector(".todo-text");
+    return {
+      text: textSpan.textContent,
+      completed: checkbox.checked,
+    };
+  });
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+}
+
+function loadTodos() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  try {
+    const todos = JSON.parse(raw);
+    if (!Array.isArray(todos)) return;
+
+    todos.forEach((todo) => {
+      if (!todo || typeof todo.text !== "string") return;
+      list.appendChild(createTodoItem(todo.text, Boolean(todo.completed)));
+    });
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+function createTodoItem(text, completed = false) {
   const item = document.createElement("li");
 
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.className = "todo-check";
+  checkbox.checked = completed;
 
   const textSpan = document.createElement("span");
   textSpan.className = "todo-text";
   textSpan.textContent = text;
+  if (completed) textSpan.classList.add("completed");
 
   const editBtn = document.createElement("button");
   editBtn.type = "button";
@@ -30,6 +63,7 @@ function createTodoItem(text) {
 
   checkbox.addEventListener("change", () => {
     textSpan.classList.toggle("completed", checkbox.checked);
+    saveTodos();
   });
 
   editBtn.addEventListener("click", () => {
@@ -41,6 +75,7 @@ function createTodoItem(text) {
     if (!trimmed) return;
 
     textSpan.textContent = trimmed;
+    saveTodos();
   });
 
   const deleteBtn = document.createElement("button");
@@ -50,6 +85,7 @@ function createTodoItem(text) {
 
   deleteBtn.addEventListener("click", () => {
     item.remove();
+    saveTodos();
   });
 
   item.append(checkbox, textSpan, editBtn, deleteBtn);
@@ -63,6 +99,7 @@ form.addEventListener("submit", (event) => {
   if (!text) return;
 
   list.appendChild(createTodoItem(text));
+  saveTodos();
 
   input.value = "";
   input.focus();
@@ -70,4 +107,7 @@ form.addEventListener("submit", (event) => {
 
 clearAllBtn.addEventListener("click", () => {
   list.innerHTML = "";
+  saveTodos();
 });
+
+loadTodos();
