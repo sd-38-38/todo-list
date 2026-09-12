@@ -7,20 +7,29 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="leaf leaf-1" aria-hidden="true"></div>
-  <div class="leaf leaf-2" aria-hidden="true"></div>
-  <div class="leaf leaf-3" aria-hidden="true"></div>
-
   <main class="container">
     <h1>Personalized Progress Tracking</h1>
 
     <form class="add-form" id="add-form">
       <input type="text" id="todo-input" placeholder="Yeni madde yazın..." autocomplete="off">
-      <button type="submit">Ekle</button>
+      <button type="submit" class="add-btn" aria-label="Ekle" title="Ekle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 5v14"/>
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
     </form>
 
     <div class="list-actions">
-      <button type="button" class="clear-all-btn" id="clear-all">Tümünü Sil</button>
+      <button type="button" class="clear-all-btn" id="clear-all" aria-label="Tümünü Sil" title="Tümünü Sil">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 6h18"/>
+          <path d="M8 6V4h8v2"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/>
+          <path d="M14 11v6"/>
+        </svg>
+      </button>
     </div>
 
     <ul class="todo-list" id="todo-list"></ul>
