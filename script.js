@@ -2,6 +2,7 @@ const form = document.getElementById("add-form");
 const input = document.getElementById("todo-input");
 const list = document.getElementById("todo-list");
 const clearAllBtn = document.getElementById("clear-all");
+const formError = document.getElementById("form-error");
 const STORAGE_KEY = "todo-list";
 
 const editIcon = `
@@ -102,18 +103,35 @@ function createTodoItem(text, completed = false) {
   return item;
 }
 
+function showFormError() {
+  formError.hidden = false;
+  input.classList.add("invalid");
+  input.focus();
+}
+
+function hideFormError() {
+  formError.hidden = true;
+  input.classList.remove("invalid");
+}
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const text = input.value.trim();
-  if (!text) return;
+  if (!text) {
+    showFormError();
+    return;
+  }
 
+  hideFormError();
   list.appendChild(createTodoItem(text));
   saveTodos();
 
   input.value = "";
   input.focus();
 });
+
+input.addEventListener("input", hideFormError);
 
 clearAllBtn.addEventListener("click", () => {
   list.innerHTML = "";

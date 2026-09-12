@@ -35,7 +35,7 @@ h1 {
 .add-form {
   display: flex;
   gap: 0.6rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.65rem;
 }
 
 .add-form input {
@@ -57,6 +57,28 @@ h1 {
 .add-form input:focus {
   border-color: #8fb8ce;
   background: rgba(255, 255, 255, 0.92);
+}
+
+.add-form input.invalid {
+  border-color: #d7a0a8;
+  background: #fbf4f5;
+}
+
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1.35rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: #f8e8ea;
+  border: 1px solid #e8c4c9;
+  color: #9a5662;
+  font-size: 0.9rem;
+}
+
+.form-error[hidden] {
+  display: none;
 }
 
 .add-btn,
