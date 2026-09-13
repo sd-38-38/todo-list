@@ -7,35 +7,148 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="container">
+  <main class="app">
     <h1>Personalized Progress Tracking</h1>
 
-    <form class="add-form" id="add-form">
-      <input type="text" id="todo-input" placeholder="Yeni madde yazın..." autocomplete="off">
-      <button type="submit" class="add-btn" aria-label="Ekle" title="Ekle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 5v14"/>
-          <path d="M5 12h14"/>
-        </svg>
-      </button>
-    </form>
+    <div class="layout">
+      <section class="todo-panel">
+        <div class="category-filters" id="category-filters"></div>
+        <div class="list-actions">
+          <button type="button" class="add-btn" id="open-task-modal" aria-label="Görev Ekle" title="Görev Ekle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14"/>
+              <path d="M5 12h14"/>
+            </svg>
+          </button>
+          <button type="button" class="clear-all-btn" id="clear-all" aria-label="Tümünü Sil" title="Tümünü Sil">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 6h18"/>
+              <path d="M8 6V4h8v2"/>
+              <path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6"/>
+              <path d="M14 11v6"/>
+            </svg>
+          </button>
+        </div>
 
-    <p class="form-error" id="form-error" role="alert" hidden>Lütfen bir görev yazın.</p>
+        <ul class="todo-list" id="todo-list"></ul>
+        <p class="todo-count" id="todo-count">Toplam görev: 0</p>
+      </section>
 
-    <div class="list-actions">
-      <button type="button" class="clear-all-btn" id="clear-all" aria-label="Tümünü Sil" title="Tümünü Sil">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 6h18"/>
-          <path d="M8 6V4h8v2"/>
-          <path d="M19 6l-1 14H6L5 6"/>
-          <path d="M10 11v6"/>
-          <path d="M14 11v6"/>
-        </svg>
-      </button>
+      <aside class="category-panel">
+        <h2>Kategoriler</h2>
+        <form class="category-form" id="category-form">
+          <input type="text" id="category-name" placeholder="Kategori adı" autocomplete="off">
+          <button type="submit" class="add-btn" aria-label="Kategori Ekle" title="Kategori Ekle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14"/>
+              <path d="M5 12h14"/>
+            </svg>
+          </button>
+        </form>
+        <div class="color-options" id="color-options" role="radiogroup" aria-label="Kategori rengi" hidden></div>
+        <p class="form-error" id="category-error" role="alert" hidden>Kategori adı girin.</p>
+        <ul class="category-list" id="category-list"></ul>
+      </aside>
     </div>
-
-    <ul class="todo-list" id="todo-list"></ul>
   </main>
+
+  <div class="modal-overlay" id="task-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title">Görev Ekle</h2>
+        <button type="button" class="close-btn" id="close-task-modal" aria-label="Kapat" title="Kapat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18"/>
+            <path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form class="add-form" id="add-form">
+        <input type="text" id="todo-input" placeholder="Yeni madde yazın..." autocomplete="off">
+
+        <div class="picker-group">
+          <span class="picker-label">Kategori</span>
+          <div class="chip-row" id="todo-category-options"></div>
+        </div>
+
+        <div class="picker-group">
+          <span class="picker-label">Saat</span>
+          <div class="clock-picker">
+            <div class="clock-col">
+              <button type="button" class="clock-btn" id="hour-up" aria-label="Saati artır">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+              </button>
+              <div class="clock-num" id="hour-display">09</div>
+              <button type="button" class="clock-btn" id="hour-down" aria-label="Saati azalt">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <span class="clock-caption">Saat</span>
+            </div>
+            <span class="time-colon">:</span>
+            <div class="clock-col">
+              <button type="button" class="clock-btn" id="minute-up" aria-label="Dakikayı artır">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+              </button>
+              <div class="clock-num" id="minute-display">00</div>
+              <button type="button" class="clock-btn" id="minute-down" aria-label="Dakikayı azalt">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <span class="clock-caption">Dakika</span>
+            </div>
+          </div>
+          <button type="button" class="time-clear" id="clear-time">Saat yok</button>
+        </div>
+
+        <div class="picker-group">
+          <span class="picker-label">Süre</span>
+          <div class="chip-row" id="duration-chips"></div>
+        </div>
+
+        <div class="picker-group">
+          <span class="picker-label">Önem</span>
+          <div class="chip-row" id="importance-chips"></div>
+        </div>
+
+        <p class="form-error" id="form-error" role="alert" hidden>Lütfen bir görev yazın.</p>
+        <button type="submit" class="modal-submit" id="modal-submit">Ekle</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="focus-overlay" id="focus-overlay" hidden>
+    <div class="focus-stage">
+      <article class="focus-card" id="focus-task-card">
+        <button type="button" class="close-btn" id="close-focus" aria-label="Kapat" title="Kapat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18"/>
+            <path d="m6 6 12 12"/>
+          </svg>
+        </button>
+        <p class="picker-label">Şu anki görev</p>
+        <h3 id="focus-task-title"></h3>
+        <div class="todo-meta" id="focus-task-meta"></div>
+      </article>
+      <article class="focus-card focus-timer-card">
+        <p class="picker-label" id="focus-timer-label">Kalan süre</p>
+        <div class="focus-timer" id="focus-timer">00:00:00</div>
+        <div class="focus-timer-actions">
+          <button type="button" class="start-btn" id="focus-play" aria-label="Başlat" title="Başlat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.14v13.72L19 12 8 5.14Z"/>
+            </svg>
+          </button>
+          <button type="button" class="edit-btn" id="focus-pause" aria-label="Durdur" title="Durdur">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" rx="1"/>
+              <rect x="14" y="5" width="4" height="14" rx="1"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
