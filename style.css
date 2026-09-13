@@ -131,6 +131,35 @@ h2 {
   gap: 0.4rem;
 }
 
+.custom-duration {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.custom-duration input {
+  width: 4.2rem;
+  padding: 0.45rem 0.55rem;
+  border: 1.5px solid #bdd6e6;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #3a5568;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.custom-duration input:focus {
+  border-color: #8fb8ce;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.custom-duration span {
+  font-size: 0.8rem;
+  color: #6b8ea3;
+}
+
 .choice-chip {
   max-width: 100%;
   padding: 0.4rem 0.7rem;

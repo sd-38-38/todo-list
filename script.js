@@ -9,6 +9,8 @@ const minuteDownBtn = document.getElementById("minute-down");
 const minuteUpBtn = document.getElementById("minute-up");
 const clearTimeBtn = document.getElementById("clear-time");
 const durationChips = document.getElementById("duration-chips");
+const durationHoursInput = document.getElementById("duration-hours");
+const durationMinutesInput = document.getElementById("duration-minutes");
 const importanceChips = document.getElementById("importance-chips");
 const list = document.getElementById("todo-list");
 const clearAllBtn = document.getElementById("clear-all");
@@ -139,7 +141,23 @@ function changeMinute(step) {
   renderClock();
 }
 
-function renderDurationChips() {
+function syncDurationInputs() {
+  const hours = Math.floor(selectedDuration / 60);
+  const minutes = selectedDuration % 60;
+  durationHoursInput.value = hours || "";
+  durationMinutesInput.value = minutes || "";
+}
+
+function applyCustomDuration() {
+  const hours = Math.max(0, Number(durationHoursInput.value) || 0);
+  let minutes = Math.max(0, Number(durationMinutesInput.value) || 0);
+  if (minutes > 59) minutes = 59;
+  durationMinutesInput.value = durationMinutesInput.value === "" && minutes === 0 ? "" : String(minutes);
+  selectedDuration = hours * 60 + minutes;
+  renderDurationChips(false);
+}
+
+function renderDurationChips(syncInputs = true) {
   durationChips.innerHTML = "";
   const noneBtn = document.createElement("button");
   noneBtn.type = "button";
@@ -162,6 +180,17 @@ function renderDurationChips() {
     });
     durationChips.appendChild(button);
   });
+
+  const isPreset = selectedDuration === 0 || Object.prototype.hasOwnProperty.call(DURATION_LABELS, selectedDuration);
+  if (!isPreset) {
+    const customBtn = document.createElement("button");
+    customBtn.type = "button";
+    customBtn.className = "choice-chip active";
+    customBtn.textContent = "Özel";
+    durationChips.appendChild(customBtn);
+  }
+
+  if (syncInputs) syncDurationInputs();
 }
 
 function renderImportanceChips() {
@@ -562,7 +591,12 @@ function renderCategoryList() {
 }
 
 function formatDuration(minutes) {
-  return DURATION_LABELS[minutes] || `${minutes} dakika`;
+  if (DURATION_LABELS[minutes]) return DURATION_LABELS[minutes];
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours && rest) return `${hours} saat ${rest} dakika`;
+  if (hours) return `${hours} saat`;
+  return `${minutes} dakika`;
 }
 
 function formatTimeRange(time, duration) {
@@ -853,6 +887,9 @@ applyFilter();
 renderClock();
 renderDurationChips();
 renderImportanceChips();
+
+durationHoursInput.addEventListener("input", applyCustomDuration);
+durationMinutesInput.addEventListener("input", applyCustomDuration);
 
 hourUpBtn.addEventListener("click", () => changeHour(1));
 hourDownBtn.addEventListener("click", () => changeHour(-1));
