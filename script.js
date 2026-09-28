@@ -1,5 +1,7 @@
 const form = document.getElementById("add-form");
 const input = document.getElementById("todo-input");
+const dateInput = document.getElementById("todo-date");
+const clearDateBtn = document.getElementById("clear-date");
 const categoryOptions = document.getElementById("todo-category-options");
 const hourDisplay = document.getElementById("hour-display");
 const minuteDisplay = document.getElementById("minute-display");
@@ -27,7 +29,9 @@ const modalTitle = document.getElementById("modal-title");
 const modalSubmit = document.getElementById("modal-submit");
 const openTaskModalBtn = document.getElementById("open-task-modal");
 const closeTaskModalBtn = document.getElementById("close-task-modal");
-const appRoot = document.querySelector(".app");
+const openTaskFromCalendarBtn = document.getElementById("open-task-from-calendar");
+const appRoot = document.getElementById("app-root");
+const shell = document.querySelector(".shell");
 const focusOverlay = document.getElementById("focus-overlay");
 const focusTaskCard = document.getElementById("focus-task-card");
 const focusTaskTitle = document.getElementById("focus-task-title");
@@ -37,6 +41,18 @@ const focusTimerLabel = document.getElementById("focus-timer-label");
 const closeFocusBtn = document.getElementById("close-focus");
 const focusPlayBtn = document.getElementById("focus-play");
 const focusPauseBtn = document.getElementById("focus-pause");
+const tasksView = document.getElementById("tasks-view");
+const calendarView = document.getElementById("calendar-view");
+const navTasks = document.getElementById("nav-tasks");
+const navCalendar = document.getElementById("nav-calendar");
+const calendarGrid = document.getElementById("calendar-grid");
+const calMonthLabel = document.getElementById("cal-month-label");
+const calPrevBtn = document.getElementById("cal-prev");
+const calNextBtn = document.getElementById("cal-next");
+const calTodayBtn = document.getElementById("cal-today");
+const selectedDayLabel = document.getElementById("selected-day-label");
+const dayTodoList = document.getElementById("day-todo-list");
+const dayTodoCount = document.getElementById("day-todo-count");
 
 const STORAGE_KEY = "todo-list";
 const CATEGORY_KEY = "todo-categories";
@@ -71,6 +87,15 @@ const IMPORTANCE_OPTIONS = [
   { id: "low", label: "Düşük önem" },
 ];
 
+const MONTH_NAMES = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+];
+
+const WEEKDAY_NAMES = [
+  "Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi",
+];
+
 const editIcon = `
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M12 20h9"/>
@@ -96,6 +121,7 @@ let categories = [];
 let selectedColor = CATEGORY_COLORS[0];
 let activeFilter = "all";
 let selectedTaskCategory = "";
+let selectedDate = "";
 let selectedHour = null;
 let selectedMinute = 0;
 let selectedDuration = 0;
@@ -106,9 +132,42 @@ let timerId = null;
 let remainingSeconds = 0;
 let originalSeconds = 0;
 let countingDown = true;
+let currentView = "tasks";
+let calendarCursor = startOfMonth(new Date());
+let selectedDay = toDateKey(new Date());
 
 function padTime(value) {
   return String(value).padStart(2, "0");
+}
+
+function toDateKey(date) {
+  return `${date.getFullYear()}-${padTime(date.getMonth() + 1)}-${padTime(date.getDate())}`;
+}
+
+function startOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function parseDateKey(key) {
+  if (!key || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDateLabel(key) {
+  const date = parseDateKey(key);
+  if (!date) return "";
+  return `${WEEKDAY_NAMES[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function formatShortDate(key) {
+  const date = parseDateKey(key);
+  if (!date) return "";
+  return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function getAllTodos() {
+  return [...list.querySelectorAll("li")].map(todoFromItem);
 }
 
 function getSelectedTime() {
@@ -120,6 +179,11 @@ function renderClock() {
   hourDisplay.textContent = selectedHour === null ? "--" : padTime(selectedHour);
   minuteDisplay.textContent = selectedHour === null ? "--" : padTime(selectedMinute);
   clearTimeBtn.classList.toggle("active", selectedHour === null);
+}
+
+function renderDatePicker() {
+  dateInput.value = selectedDate || "";
+  clearDateBtn.classList.toggle("active", !selectedDate);
 }
 
 function ensureTime() {
@@ -273,6 +337,7 @@ function closeFocusMode() {
   stopFocusTimer();
   focusOverlay.hidden = true;
   appRoot.classList.remove("is-blurred");
+  shell.classList.remove("is-blurred");
   focusTimer.classList.remove("done");
 }
 
@@ -287,6 +352,37 @@ function prepareFocusTimer(durationMinutes) {
   updateTimerControls();
 }
 
+function appendTodoMeta(container, todo) {
+  if (todo.categoryName) {
+    const badge = document.createElement("span");
+    badge.className = "todo-badge";
+    badge.textContent = todo.categoryName;
+    badge.style.background = todo.categoryColor || "#8fb8ce";
+    badge.style.color = isLightColor(todo.categoryColor || "#8fb8ce") ? "#3a5568" : "#fff";
+    container.appendChild(badge);
+  }
+
+  if (todo.date) {
+    const dateBadge = document.createElement("span");
+    dateBadge.className = "todo-badge date-badge";
+    dateBadge.textContent = formatShortDate(todo.date);
+    container.appendChild(dateBadge);
+  }
+
+  const importance = document.createElement("span");
+  importance.className = "todo-badge importance-" + (todo.importance || "medium");
+  importance.textContent = importanceLabel(todo.importance || "medium");
+  container.appendChild(importance);
+
+  const rangeText = formatTimeRange(todo.time || "", Number(todo.duration) || 0);
+  if (rangeText) {
+    const timeEl = document.createElement("span");
+    timeEl.className = "todo-time";
+    timeEl.textContent = rangeText;
+    container.appendChild(timeEl);
+  }
+}
+
 function openFocusMode(todo) {
   focusTaskTitle.textContent = todo.text;
   focusTaskMeta.innerHTML = "";
@@ -299,29 +395,10 @@ function openFocusMode(todo) {
     focusTaskCard.style.borderColor = "";
   }
 
-  if (todo.categoryName) {
-    const badge = document.createElement("span");
-    badge.className = "todo-badge";
-    badge.textContent = todo.categoryName;
-    badge.style.background = todo.categoryColor || "#8fb8ce";
-    badge.style.color = isLightColor(todo.categoryColor || "#8fb8ce") ? "#3a5568" : "#fff";
-    focusTaskMeta.appendChild(badge);
-  }
-
-  const importance = document.createElement("span");
-  importance.className = "todo-badge importance-" + (todo.importance || "medium");
-  importance.textContent = importanceLabel(todo.importance || "medium");
-  focusTaskMeta.appendChild(importance);
-
-  const rangeText = formatTimeRange(todo.time || "", Number(todo.duration) || 0);
-  if (rangeText) {
-    const timeEl = document.createElement("span");
-    timeEl.className = "todo-time";
-    timeEl.textContent = rangeText;
-    focusTaskMeta.appendChild(timeEl);
-  }
+  appendTodoMeta(focusTaskMeta, todo);
 
   appRoot.classList.add("is-blurred");
+  shell.classList.add("is-blurred");
   focusOverlay.hidden = false;
   prepareFocusTimer(Number(todo.duration) || 0);
 }
@@ -355,6 +432,19 @@ function applyFilter() {
     item.classList.toggle("hidden", !match);
   });
   updateCount();
+}
+
+function setView(view) {
+  currentView = view;
+  tasksView.hidden = view !== "tasks";
+  calendarView.hidden = view !== "calendar";
+  navTasks.classList.toggle("active", view === "tasks");
+  navCalendar.classList.toggle("active", view === "calendar");
+
+  if (view === "calendar") {
+    renderCalendar();
+    renderDayDetail();
+  }
 }
 
 function renderCategoryFilters() {
@@ -413,6 +503,7 @@ function renderColorOptions() {
 function fillTaskForm(todo) {
   input.value = todo.text || "";
   selectedTaskCategory = todo.categoryId || "";
+  selectedDate = todo.date || "";
   selectedDuration = Number(todo.duration) || 0;
   selectedImportance = todo.importance || "medium";
 
@@ -426,25 +517,28 @@ function fillTaskForm(todo) {
   }
 
   renderCategorySelect();
+  renderDatePicker();
   renderClock();
   renderDurationChips();
   renderImportanceChips();
 }
 
-function resetTaskPickers() {
+function resetTaskPickers(presetDate = "") {
   selectedTaskCategory = "";
+  selectedDate = presetDate || "";
   selectedHour = null;
   selectedMinute = 0;
   selectedDuration = 0;
   selectedImportance = "medium";
   input.value = "";
   renderCategorySelect();
+  renderDatePicker();
   renderClock();
   renderDurationChips();
   renderImportanceChips();
 }
 
-function openTaskModal(item = null) {
+function openTaskModal(item = null, presetDate = "") {
   editingItem = item;
   hideFormError();
   taskModal.hidden = false;
@@ -456,7 +550,7 @@ function openTaskModal(item = null) {
   } else {
     modalTitle.textContent = "Görev Ekle";
     modalSubmit.textContent = "Ekle";
-    resetTaskPickers();
+    resetTaskPickers(presetDate);
   }
 
   input.focus();
@@ -618,21 +712,36 @@ function importanceLabel(id) {
 
 function todoFromItem(item) {
   return {
+    id: item.dataset.id || "",
     text: item.querySelector(".todo-text").textContent,
     completed: item.querySelector(".todo-check").checked,
     categoryId: item.dataset.categoryId || "",
     categoryName: item.dataset.categoryName || "",
     categoryColor: item.dataset.categoryColor || "",
+    date: item.dataset.date || "",
     time: item.dataset.time || "",
     duration: Number(item.dataset.duration) || 0,
     importance: item.dataset.importance || "medium",
   };
 }
 
+function findTodoItemById(id) {
+  if (!id) return null;
+  return [...list.querySelectorAll("li")].find((item) => item.dataset.id === id) || null;
+}
+
+function createId() {
+  return `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function saveTodos() {
-  const todos = [...list.querySelectorAll("li")].map(todoFromItem);
+  const todos = getAllTodos();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
   applyFilter();
+  if (currentView === "calendar") {
+    renderCalendar();
+    renderDayDetail();
+  }
 }
 
 function loadTodos() {
@@ -645,6 +754,7 @@ function loadTodos() {
 
     todos.forEach((todo) => {
       if (!todo || typeof todo.text !== "string") return;
+      if (!todo.id) todo.id = createId();
       list.appendChild(createTodoItem(todo));
     });
   } catch {
@@ -652,11 +762,15 @@ function loadTodos() {
   }
 }
 
-function createTodoItem(todo) {
+function createTodoItem(todo, options = {}) {
+  const { mirrorOf = null } = options;
+  const target = mirrorOf;
   const item = document.createElement("li");
+  item.dataset.id = todo.id || createId();
   item.dataset.categoryId = todo.categoryId || "";
   item.dataset.categoryName = todo.categoryName || "";
   item.dataset.categoryColor = todo.categoryColor || "";
+  item.dataset.date = todo.date || "";
   item.dataset.time = todo.time || "";
   item.dataset.duration = String(todo.duration || 0);
   item.dataset.importance = todo.importance || "medium";
@@ -683,28 +797,7 @@ function createTodoItem(todo) {
 
   const meta = document.createElement("div");
   meta.className = "todo-meta";
-
-  if (todo.categoryName) {
-    const badge = document.createElement("span");
-    badge.className = "todo-badge";
-    badge.textContent = todo.categoryName;
-    badge.style.background = todo.categoryColor || "#8fb8ce";
-    badge.style.color = isLightColor(todo.categoryColor || "#8fb8ce") ? "#3a5568" : "#fff";
-    meta.appendChild(badge);
-  }
-
-  const importance = document.createElement("span");
-  importance.className = "todo-badge importance-" + (todo.importance || "medium");
-  importance.textContent = importanceLabel(todo.importance || "medium");
-  meta.appendChild(importance);
-
-  const rangeText = formatTimeRange(todo.time || "", Number(todo.duration) || 0);
-  if (rangeText) {
-    const timeEl = document.createElement("span");
-    timeEl.className = "todo-time";
-    timeEl.textContent = rangeText;
-    meta.appendChild(timeEl);
-  }
+  appendTodoMeta(meta, todo);
 
   body.append(textSpan, meta);
 
@@ -717,7 +810,7 @@ function createTodoItem(todo) {
   editBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    openTaskModal(item);
+    openTaskModal(target || item);
   });
 
   const startBtn = document.createElement("button");
@@ -729,11 +822,16 @@ function createTodoItem(todo) {
   startBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    openFocusMode(todoFromItem(item));
+    openFocusMode(todoFromItem(target || item));
   });
 
   checkbox.addEventListener("change", () => {
     textSpan.classList.toggle("completed", checkbox.checked);
+    if (target) {
+      const sourceCheck = target.querySelector(".todo-check");
+      sourceCheck.checked = checkbox.checked;
+      target.querySelector(".todo-text").classList.toggle("completed", checkbox.checked);
+    }
     saveTodos();
   });
 
@@ -744,12 +842,209 @@ function createTodoItem(todo) {
   deleteBtn.title = "Sil";
   deleteBtn.innerHTML = deleteIcon;
   deleteBtn.addEventListener("click", () => {
-    item.remove();
+    if (target) {
+      target.remove();
+    } else {
+      item.remove();
+    }
     saveTodos();
   });
 
   item.append(checkbox, body, editBtn, startBtn, deleteBtn);
   return item;
+}
+
+function renderCalendar() {
+  const year = calendarCursor.getFullYear();
+  const month = calendarCursor.getMonth();
+  calMonthLabel.textContent = `${MONTH_NAMES[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1);
+  let startWeekday = firstDay.getDay() - 1;
+  if (startWeekday < 0) startWeekday = 6;
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+  const todayKey = toDateKey(new Date());
+  const todosByDate = {};
+
+  getAllTodos().forEach((todo) => {
+    if (!todo.date) return;
+    if (!todosByDate[todo.date]) todosByDate[todo.date] = [];
+    todosByDate[todo.date].push(todo);
+  });
+
+  calendarGrid.innerHTML = "";
+  const totalCells = 42;
+
+  for (let i = 0; i < totalCells; i++) {
+    const dayNum = i - startWeekday + 1;
+    let cellDate;
+    let outside = false;
+
+    if (dayNum < 1) {
+      cellDate = new Date(year, month - 1, daysInPrev + dayNum);
+      outside = true;
+    } else if (dayNum > daysInMonth) {
+      cellDate = new Date(year, month + 1, dayNum - daysInMonth);
+      outside = true;
+    } else {
+      cellDate = new Date(year, month, dayNum);
+    }
+
+    const key = toDateKey(cellDate);
+    const dayTodos = todosByDate[key] || [];
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "cal-day";
+    if (outside) button.classList.add("outside");
+    if (key === todayKey) button.classList.add("today");
+    if (key === selectedDay) button.classList.add("selected");
+
+    const num = document.createElement("span");
+    num.className = "cal-day-num";
+    num.textContent = String(cellDate.getDate());
+
+    button.appendChild(num);
+
+    if (dayTodos.length) {
+      const sorted = [...dayTodos].sort((a, b) => {
+        if (!a.time && !b.time) return 0;
+        if (!a.time) return 1;
+        if (!b.time) return -1;
+        return a.time.localeCompare(b.time);
+      });
+
+      const events = document.createElement("div");
+      events.className = "cal-events";
+
+      const visible = sorted.slice(0, 3);
+      visible.forEach((todo) => {
+        const event = document.createElement("span");
+        event.className = "cal-event";
+        event.textContent = todo.time ? `${todo.time} ${todo.text}` : todo.text;
+        if (todo.categoryColor) {
+          event.style.borderLeftColor = todo.categoryColor;
+          event.style.background = hexToRgba(todo.categoryColor, 0.18);
+        }
+        if (todo.completed) event.style.textDecoration = "line-through";
+        events.appendChild(event);
+      });
+
+      if (sorted.length > 3) {
+        const more = document.createElement("span");
+        more.className = "cal-event more";
+        more.textContent = `+${sorted.length - 3} daha`;
+        events.appendChild(more);
+      }
+
+      button.appendChild(events);
+    }
+
+    button.addEventListener("click", () => {
+      selectedDay = key;
+      if (outside) {
+        calendarCursor = startOfMonth(cellDate);
+      }
+      renderCalendar();
+      renderDayDetail();
+    });
+
+    calendarGrid.appendChild(button);
+  }
+}
+
+function renderDayDetail() {
+  selectedDayLabel.textContent = formatDateLabel(selectedDay);
+  dayTodoList.innerHTML = "";
+
+  const dayTodos = getAllTodos()
+    .filter((todo) => todo.date === selectedDay)
+    .sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
+
+  dayTodos.forEach((todo) => {
+    const sourceItem = findTodoItemById(todo.id);
+    if (!sourceItem) return;
+
+    const item = document.createElement("li");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "todo-check";
+    checkbox.checked = Boolean(todo.completed);
+
+    const body = document.createElement("div");
+    body.className = "todo-body";
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "todo-text" + (todo.completed ? " completed" : "");
+    textSpan.textContent = todo.text;
+
+    const meta = document.createElement("div");
+    meta.className = "todo-meta";
+    appendTodoMeta(meta, { ...todo, date: "" });
+
+    body.append(textSpan, meta);
+
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "edit-btn";
+    editBtn.setAttribute("aria-label", "Düzenle");
+    editBtn.title = "Düzenle";
+    editBtn.innerHTML = editIcon;
+
+    const startBtn = document.createElement("button");
+    startBtn.type = "button";
+    startBtn.className = "start-btn";
+    startBtn.setAttribute("aria-label", "Başlat");
+    startBtn.title = "Başlat";
+    startBtn.innerHTML = startIcon;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.setAttribute("aria-label", "Sil");
+    deleteBtn.title = "Sil";
+    deleteBtn.innerHTML = deleteIcon;
+
+    checkbox.addEventListener("change", () => {
+      const sourceCheck = sourceItem.querySelector(".todo-check");
+      sourceCheck.checked = checkbox.checked;
+      sourceItem.querySelector(".todo-text").classList.toggle("completed", checkbox.checked);
+      textSpan.classList.toggle("completed", checkbox.checked);
+      saveTodos();
+    });
+
+    editBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openTaskModal(sourceItem);
+    });
+
+    startBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openFocusMode(todoFromItem(sourceItem));
+    });
+
+    deleteBtn.addEventListener("click", () => {
+      sourceItem.remove();
+      saveTodos();
+    });
+
+    item.append(checkbox, body, editBtn, startBtn, deleteBtn);
+    dayTodoList.appendChild(item);
+  });
+
+  dayTodoCount.textContent = dayTodos.length
+    ? `Bu günde ${dayTodos.length} görev`
+    : "Bu günde görev yok";
 }
 
 function showFormError() {
@@ -774,14 +1069,16 @@ function hideCategoryError() {
   categoryNameInput.classList.remove("invalid");
 }
 
-function buildTodoFromForm(completed = false) {
+function buildTodoFromForm(completed = false, id = "") {
   const selected = categories.find((category) => category.id === selectedTaskCategory);
   return {
+    id: id || createId(),
     text: input.value.trim(),
     completed,
     categoryId: selected ? selected.id : "",
     categoryName: selected ? selected.name : "",
     categoryColor: selected ? selected.color : "",
+    date: selectedDate || "",
     time: getSelectedTime(),
     duration: selectedDuration,
     importance: selectedImportance,
@@ -800,7 +1097,10 @@ form.addEventListener("submit", (event) => {
   hideFormError();
 
   if (editingItem) {
-    const updated = buildTodoFromForm(editingItem.querySelector(".todo-check").checked);
+    const updated = buildTodoFromForm(
+      editingItem.querySelector(".todo-check").checked,
+      editingItem.dataset.id
+    );
     editingItem.replaceWith(createTodoItem(updated));
   } else {
     list.appendChild(createTodoItem(buildTodoFromForm(false)));
@@ -812,6 +1112,16 @@ form.addEventListener("submit", (event) => {
 });
 
 input.addEventListener("input", hideFormError);
+
+dateInput.addEventListener("change", () => {
+  selectedDate = dateInput.value || "";
+  renderDatePicker();
+});
+
+clearDateBtn.addEventListener("click", () => {
+  selectedDate = "";
+  renderDatePicker();
+});
 
 categoryForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -855,7 +1165,29 @@ categoryNameInput.addEventListener("input", () => {
   }
 });
 
+navTasks.addEventListener("click", () => setView("tasks"));
+navCalendar.addEventListener("click", () => setView("calendar"));
+
+calPrevBtn.addEventListener("click", () => {
+  calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+  renderCalendar();
+});
+
+calNextBtn.addEventListener("click", () => {
+  calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+  renderCalendar();
+});
+
+calTodayBtn.addEventListener("click", () => {
+  const today = new Date();
+  calendarCursor = startOfMonth(today);
+  selectedDay = toDateKey(today);
+  renderCalendar();
+  renderDayDetail();
+});
+
 openTaskModalBtn.addEventListener("click", () => openTaskModal());
+openTaskFromCalendarBtn.addEventListener("click", () => openTaskModal(null, selectedDay));
 closeTaskModalBtn.addEventListener("click", closeTaskModal);
 closeFocusBtn.addEventListener("click", closeFocusMode);
 focusPlayBtn.addEventListener("click", playFocusTimer);
@@ -885,8 +1217,10 @@ renderCategoryFilters();
 loadTodos();
 applyFilter();
 renderClock();
+renderDatePicker();
 renderDurationChips();
 renderImportanceChips();
+setView("tasks");
 
 durationHoursInput.addEventListener("input", applyCustomDuration);
 durationMinutesInput.addEventListener("input", applyCustomDuration);
